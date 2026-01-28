@@ -8,12 +8,16 @@
     "build": "tsc",
     "watch": "tsc -w"
   },
-  "dependencies": {},
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
-    "moltbot": "workspace:*" 
+    "moltbot": "workspace:*"
   },
   "clawdbot": {
-    "extensions": ["dist/index.js"]
+    "extensions": [
+      "dist/index.js"
+    ]
   }
 }
