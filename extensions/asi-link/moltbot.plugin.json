@@ -1,0 +1,17 @@
+{
+  "id": "asi-link",
+  "name": "ASI Link",
+  "description": "The Corpus Callosum: Connects Clawdbot (Body) to ASI (Mind).",
+  "version": "1.0.0",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "apiUrl": { "type": "string" },
+      "apiToken": { "type": "string" }
+    }
+  },
+  "uiHints": {
+    "apiUrl": { "label": "ASI Server URL", "placeholder": "https://asi.petportal.ai" },
+    "apiToken": { "label": "Symbiotic Token", "sensitive": true }
+  }
+}

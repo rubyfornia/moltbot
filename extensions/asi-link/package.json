@@ -1,0 +1,19 @@
+{
+  "name": "asi-link",
+  "version": "1.0.0",
+  "description": "The Corpus Callosum",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "moltbot": "workspace:*" 
+  },
+  "clawdbot": {
+    "extensions": ["dist/index.js"]
+  }
+}
