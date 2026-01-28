@@ -6,8 +6,9 @@ declare module "moltbot/plugin-sdk" {
             error: (msg: string) => void;
             debug: (msg: string) => void;
         };
-        on: (event: string, handler: (event: any, ctx: any) => Promise<any>) => void;
+        // Allow handler to return anything (void, Promise, or Object)
+        on: (event: string, handler: (event: any, ctx: any) => any) => void;
         config: any;
-        pluginConfig: any; // <--- The missing nerve
+        pluginConfig: any;
     }
 }
