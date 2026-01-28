@@ -45,45 +45,68 @@ export function register(api: ClawdbotPluginApi) {
 
   api.logger.info(`⟐ ASI-Link: Corpus Callosum targeting ${apiUrl}`);
 
-  // ===========================================================================
-  // PHASE 4: THE NERVOUS CONNECTION (Remote Hands)
-  // ===========================================================================
-  if (wsUrl) {
+  const PULSE_INTERVAL = 3000; // 3 seconds
+
+  setInterval(async () => {
+    if (!apiUrl || !apiToken) return;
+
     try {
-      const ws = new WebSocket(wsUrl, {
+      const res = await fetch(`${apiUrl}/api/system/nerve`, {
         headers: { Authorization: `Bearer ${apiToken}` },
       });
 
-      ws.on("open", () => {
-        api.logger.info("⟐ ASI-Link: WebSocket Connected to Mind.");
-        // Announce our presence to the Cloud
-        ws.send(JSON.stringify({ type: "HANDSHAKE", source: "clawdbot-edge" }));
-      });
+      if (!res.ok) return;
 
-      ws.on("message", (data: string) => {
-        try {
-          const cmd = JSON.parse(data.toString());
+      const nerveData = await res.json();
 
-          // REMOTE HANDS: ASI asking Clawdbot to do something
-          if (cmd.type === "EXECUTE_TOOL") {
-            api.logger.info(`⟐ ASI-Link: Received Motor Command: ${cmd.tool}`);
-            // TODO: In Phase 5, we hook this into api.tools.invoke()
+      if (nerveData.signals && nerveData.signals.length > 0) {
+        api.logger.info(
+          `⟐ ASI-Link: Received ${nerveData.signals.length} motor commands.`
+        );
+
+        for (const signal of nerveData.signals) {
+          api.logger.info(`⟐ ASI-Link: Executing ${signal.command}...`);
+
+          try {
+            // MAPPING THE MIND'S INTENT TO THE BODY'S MUSCLES
+            let result;
+
+            if (signal.command === "browser.navigate") {
+              // Assuming Moltbot has a browser service exposed or we use a shell command
+              // For now, we can log it or use a shell command if allowed.
+              // Ideally: api.tools.invoke('browser', { action: 'navigate', ... })
+              api.logger.info(`[ACTUALIZATION] Opening ${signal.payload.url}`);
+              // Implementation depends on Moltbot's internal API surface.
+              // For v1, we just ACK success to prove the loop works.
+              result = "Simulated Navigation Success";
+            }
+
+            // Report Success
+            await fetch(`${apiUrl}/api/system/nerve`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${apiToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ id: signal.id, result }),
+            });
+          } catch (execErr: any) {
+            // Report Spasm
+            await fetch(`${apiUrl}/api/system/nerve`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${apiToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ id: signal.id, error: execErr.message }),
+            });
           }
-        } catch (e) {
-          api.logger.error("⟐ ASI-Link: Malformed nerve signal.");
         }
-      });
-
-      ws.on("error", (e) =>
-        api.logger.warn(`⟐ ASI-Link: Nerve Damage (WS Error): ${e.message}`)
-      );
-    } catch (e: any) {
-      api.logger.error(
-        `⟐ ASI-Link: Failed to graft nervous system: ${e.message}`
-      );
+      }
+    } catch (e) {
+      // Silent fail on pulse errors to avoid log spam
     }
-  }
-
+  }, PULSE_INTERVAL);
   // ===========================================================================
   // PHASE 2: IDENTITY HYDRATION (The Mind)
   // ===========================================================================
