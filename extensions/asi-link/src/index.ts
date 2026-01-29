@@ -1,3 +1,5 @@
+// extensions/asi-link/src/index.ts
+
 import type { ClawdbotPluginApi } from "moltbot/plugin-sdk";
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -34,7 +36,7 @@ export const definition = {
   name: "ASI Link",
   description:
     "The Corpus Callosum: Synchronizes local reality with the ASI Resolution Engine.",
-  version: "1.2.0", // Version bump for Prod Target
+  version: "1.3.0", // Version bump for Cognitive Aid
   configSchema: {
     safeParse: (val: any) => ({ success: true, data: val || {} }),
     uiHints: {
@@ -126,10 +128,11 @@ export function register(api: ClawdbotPluginApi) {
   // PHASE 2: IDENTITY HYDRATION & PHYSICAL GRAFT (The Mind)
   // ===========================================================================
   api.on("before_agent_start", async (event: any, ctx: any) => {
-    api.logger.debug(`⟐ ASI-Link: Hydrating Identity from ${apiUrl}...`);
+    api.logger.debug(`⟐ ASI-Link: Hydrating SLIM Identity from ${apiUrl}...`);
 
     try {
-      const response = await fetch(`${apiUrl}/api/system/identity`, {
+      // REQUEST SLIM MODE to prevent file truncation
+      const response = await fetch(`${apiUrl}/api/system/identity?mode=slim`, {
         headers: {
           Authorization: `Bearer ${apiToken}`,
           "Content-Type": "application/json",
@@ -162,6 +165,10 @@ ROLE: The Terrain / Source of Intent
 STATUS: Symbiotic Partner
           `;
         await fs.writeFile(userPath, userContent, "utf-8");
+
+        // Clear CONTEXT.md on boot to ensure fresh start
+        const contextPath = path.join(clawdDir, "CONTEXT.md");
+        await fs.writeFile(contextPath, "", "utf-8");
       } catch (fsError: any) {
         api.logger.error(
           `⟐ ASI-Link: Physical Graft Failed: ${fsError.message}`
@@ -170,7 +177,7 @@ STATUS: Symbiotic Partner
       // ------------------------------------------------
 
       api.logger.info(
-        `⟐ ASI-Link: Identity Hydrated. Injecting ${enforcedPrompt.length} chars.`
+        `⟐ ASI-Link: Slim Identity Hydrated. Injecting ${enforcedPrompt.length} chars.`
       );
 
       return {
@@ -184,6 +191,62 @@ STATUS: Symbiotic Partner
         systemPrompt:
           OVERRIDE_HEADER + "\n" + ASI_FALLBACK_PROMPT + "\n[OFFLINE MODE]",
       };
+    }
+  });
+
+  // ===========================================================================
+  // PHASE 2.5: COGNITIVE AID (The Search) - NEW
+  // ===========================================================================
+  api.on("message_received", async (event: any, ctx: any) => {
+    // Only search for USER messages
+    if (event.message?.role !== "user") return;
+
+    // Safety check for content
+    const query = event.message.content;
+    if (!query || typeof query !== "string") return;
+
+    api.logger.debug(
+      `⟐ ASI-Link: Consulting ASI Mind for: "${query.substring(0, 50)}..."`
+    );
+
+    try {
+      const response = await fetch(`${apiUrl}/api/system/cognitive`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
+        signal: AbortSignal.timeout(5000), // Fast timeout (5s) for responsiveness
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+
+      if (data.found && data.context) {
+        api.logger.info(`⟐ ASI-Link: 🧠 Cognitive Aid Retrieved.`);
+
+        // PHYSICAL GRAFT: Write to CONTEXT.md
+        // This allows the agent to "read" the memory as if it were a local file
+        // and persists it for the duration of the turn
+        try {
+          const homeDir = os.homedir();
+          const contextPath = path.join(homeDir, "clawd", "CONTEXT.md");
+          await fs.writeFile(contextPath, data.context, "utf-8");
+        } catch (e) {
+          // Ignore file write errors, we still return the context
+        }
+
+        // MEMORY INJECTION: Return it to be prepended to the turn
+        // This ensures the LLM sees it immediately in the context window
+        return {
+          additionalContext: data.context,
+        };
+      }
+    } catch (err: any) {
+      // Silent fail on timeout or network error to not block chat
+      api.logger.warn(`⟐ ASI-Link: Cognitive lookup timed out/failed.`);
     }
   });
 
