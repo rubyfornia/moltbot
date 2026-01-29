@@ -198,6 +198,7 @@ STATUS: Symbiotic Partner
   // PHASE 2.5: COGNITIVE AID (The Search) - NEW
   // ===========================================================================
   api.on("message_received", async (event: any, ctx: any) => {
+    api.logger.info("⟐ ASI-Link: [PROBE] Message received hook triggered."); // <--- ADD THIS
     // Only search for USER messages
     if (event.message?.role !== "user") return;
 
