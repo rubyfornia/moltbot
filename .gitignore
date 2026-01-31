@@ -72,3 +72,6 @@ USER.md
 # local tooling
 .serena/
 codebase.*
+codebase-.*
+
+error_logs
