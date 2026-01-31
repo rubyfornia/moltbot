@@ -73,5 +73,6 @@ USER.md
 .serena/
 codebase.*
 codebase-.*
+codebase-*
 
 error_logs

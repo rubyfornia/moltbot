@@ -36,6 +36,7 @@ DEVELOPER.*
 SITE_MAP.*
 
 codebase.*
+codebase-*
 
 CODEBASE_DIRECTORY_MAP.*
 prisma/schema.*
